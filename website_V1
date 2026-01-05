@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curious Ventures | Distribution First</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050505;
+            --fg: #ffffff;
+            --accent: #4F46E5;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--fg);
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
+
+        /* Hype Grain Effect */
+        .grain::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .text-huge {
+            font-size: clamp(3.5rem, 14vw, 11rem);
+            line-height: 0.8;
+            letter-spacing: -0.06em;
+            font-weight: 900;
+        }
+
+        .archipelago-huge {
+            font-size: clamp(3rem, 10vw, 8rem);
+            line-height: 0.85;
+            letter-spacing: -0.05em;
+            font-weight: 900;
+        }
+
+        .text-stroke {
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* Hype-style Grid & Borders */
+        .hype-border { border: 1px solid var(--border); }
+        .hype-border-b { border-bottom: 1px solid var(--border); }
+        .hype-border-r { border-right: solid 1px var(--border); }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Blueprint Utility Grid Styles */
+        .utility-box {
+            position: relative;
+            background: transparent;
+            border-bottom: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            padding: 3rem;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+        .utility-box::before {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--accent);
+            transition: top 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 0;
+            opacity: 0.1;
+        }
+        .utility-box:hover::before {
+            top: 0;
+        }
+
+        /* CTA Card Interactivity */
+        .cta-card {
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cta-card:hover {
+            background-color: var(--fg);
+            color: var(--bg);
+        }
+
+        .cta-card:hover .mono-tag {
+            color: var(--accent);
+        }
+
+        .cta-card:hover .arrow-icon {
+            transform: translate(5px, -5px);
+        }
+
+        .node-circle {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: inline-block;
+            margin-right: 8px;
+            box-shadow: 0 0 15px var(--accent);
+        }
+
+        /* Ticker Animation */
+        .ticker-container {
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .ticker-content {
+            display: inline-block;
+            animation: ticker 40s linear infinite;
+        }
+
+        @keyframes ticker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Memo Specific Styles */
+        .memo-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: 0.8rem;
+        }
+        .memo-table th, .memo-table td {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .memo-table th {
+            color: rgba(255,255,255,0.4);
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            font-size: 0.65rem;
+        }
+
+        /* Modal Styles */
+        #pitchModal, #thesisGateModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            backdrop-filter: blur(15px);
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        #pitchModal.active, #thesisGateModal.active { display: flex; }
+
+        .modal-content {
+            background: #0a0a0a;
+            border: 1px solid var(--border);
+            width: 100%;
+            max-width: 500px;
+            padding: 3.5rem;
+            position: relative;
+        }
+
+        .form-step { display: none; }
+        .form-step.active { display: block; }
+
+        .modal-input {
+            background: transparent;
+            border-bottom: 1px solid var(--border);
+            width: 100%;
+            padding: 1rem 0;
+            color: white;
+            outline: none;
+            transition: border-color 0.3s;
+            font-size: 0.9rem;
+        }
+        .modal-input:focus { border-color: var(--accent); }
+
+        /* Navigation Links */
+        .nav-link:hover { color: var(--accent); }
+        .grid-item { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        @media (max-width: 768px) {
+            .text-huge { font-size: 4rem; }
+            .archipelago-huge { font-size: 3.5rem; }
+            .hype-border-r { border-right: none; border-bottom: 1px solid var(--border); }
+            .utility-box { border-right: none; padding: 2rem; }
+        }
+    </style>
+</head>
+<body class="grain selection:bg-indigo-600">
+
+    <!-- LANDING PAGE VIEW -->
+    <div id="landing-view">
+        <nav class="fixed top-0 w-full z-[1001] hype-border-b bg-[#050505]/80 backdrop-blur-md">
+            <div class="max-w-[1440px] mx-auto flex justify-between items-center px-6 py-6">
+                <div class="font-black text-2xl tracking-tighter leading-none">CURIOUS VENTURES.</div>
+                <div class="space-x-10 mono font-bold hidden md:flex items-center">
+                    <a href="javascript:void(0)" onclick="gateThesis()" class="nav-link transition">Thesis</a>
+                    <a href="javascript:void(0)" onclick="showView('archipelago')" class="nav-link transition">Archipelago</a>
+                    <button onclick="toggleModal(true)" class="bg-white text-black px-6 py-2 rounded-full hover:bg-indigo-600 hover:text-white transition">Pitch</button>
+                </div>
+                <div class="md:hidden mono font-bold text-[10px]">MENU</div>
+            </div>
+        </nav>
+
+        <section class="min-h-[85vh] flex flex-col justify-center px-6 pt-20">
+            <div class="max-w-[1440px] mx-auto w-full">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12">
+                    <div class="mono text-indigo-500 mb-4 md:mb-0 reveal">Stay Curious</div>
+                    <div class="mono opacity-30 reveal">Establishment 2026</div>
+                </div>
+                <h1 class="text-huge mb-16 reveal">DISTRIBUTION<br><span class="text-stroke">IS THE ONLY</span><br>MOAT.</h1>
+                <div class="grid md:grid-cols-12 gap-10 reveal">
+                    <div class="md:col-span-7"><p class="text-2xl md:text-4xl font-light leading-tight text-zinc-400">In a world where building is cheap, the <span class="text-white italic">Archipelago</span> is your unfair advantage. We don't just invest, we build with you.</p></div>
+                    <div class="md:col-span-5 flex flex-col items-start md:items-end justify-end"><a href="javascript:void(0)" onclick="gateThesis()" class="group flex items-center gap-6 text-sm mono font-black">READ THE INTERNAL MEMO<div class="w-12 h-12 hype-border rounded-full flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">↓</div></a></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="memo" class="pb-20 px-6 border-t border-white/10">
+            <div class="max-w-[1440px] mx-auto">
+                <div class="grid md:grid-cols-12 hype-border border-t-0">
+                    <div class="md:col-span-4 p-8 md:p-12 hype-border-r hype-border-b reveal">
+                        <div><div class="mono text-zinc-500 mb-2">Subject</div><p class="text-3xl font-black leading-none">Building Exposure Across the <br>New Consumer Stack.</p></div>
+                        <div class="mt-8 mono text-[10px] opacity-20">Owning the Distribution Moat.</div>
+                    </div>
+                    <div class="md:col-span-8 p-8 md:p-12 hype-border-b reveal grid-item">
+                        <div class="mono text-zinc-500 mb-6">00 / Summary</div>
+                        <p class="text-xl md:text-2xl leading-relaxed text-zinc-300">Curious Ventures is launching a $10 Million Pre-Seed Hybrid Fund built by leveraging an Archipelago of high-trust distribution nodes.</p>
+                    </div>
+                    <div class="md:col-span-6 p-12 hype-border-r hype-border-b reveal grid-item">
+                        <div class="mono text-zinc-500 mb-6">01 / The AI Shift</div><h3 class="text-xl font-bold mb-4 uppercase tracking-wider text-indigo-400">From Search to Command</h3>
+                        <p class="text-zinc-400 leading-relaxed">We invest in the transition from Chatbots to Large Action Models that execute complex tasks autonomously.</p>
+                    </div>
+                    <div class="md:col-span-6 p-12 hype-border-b reveal grid-item">
+                        <div class="mono text-zinc-500 mb-6">02 / Web3 Maturity</div><h3 class="text-xl font-bold mb-4 uppercase tracking-wider text-orange-400">The Invisible Layer</h3>
+                        <p class="text-zinc-400 leading-relaxed">Infrastructure that Disappears. The industry has shifted focus to the "passenger experience."</p>
+                    </div>
+                    <div class="md:col-span-4 p-12 hype-border-r reveal grid-item">
+                        <div class="mono text-zinc-500 mb-6">03 / Hybrid Model</div><p class="text-sm text-zinc-500 leading-relaxed uppercase mono">$8M Venture Arm / $2M Liquid Arm. Capturing early liquidity and participation rewards.</p>
+                    </div>
+                    <div class="md:col-span-8 p-12 reveal grid-item">
+                        <div class="mono text-zinc-500 mb-6">04 / The Archipelago</div>
+                        <div class="flex flex-wrap gap-4 mb-8"><span class="px-3 py-1 hype-border rounded-full mono text-[9px]">India Nodes</span><span class="px-3 py-1 hype-border rounded-full mono text-[9px]">Dubai Crypto Oasis</span><span class="px-3 py-1 hype-border rounded-full mono text-[9px]">SEA Hubs</span></div>
+                        <p class="text-lg md:text-xl text-zinc-300">Partnering with global online-native communities to assemble a network of networks.</p>
+                        <a href="javascript:void(0)" onclick="showView('archipelago')" class="mt-6 inline-block mono text-[10px] text-zinc-500 hover:text-white transition">Know More ↗</a>
+                    </div>
+                    <div class="md:col-span-12 border-t border-white/10 grid lg:grid-cols-2 reveal">
+                        <div class="p-12 md:p-20 hype-border-r bg-white/[0.01] flex flex-col justify-center">
+                            <div class="mono text-zinc-500 mb-10">05 / Community‑Powered Growth</div><h3 class="text-4xl text-white md:text-6xl font-black mb-10 leading-none tracking-tighter italic uppercase">Own the shift.</h3>
+                            <p class="text-xl text-zinc-400 leading-relaxed max-w-lg mb-12">We Invest in founders that reinvent the way we interact with technology.</p>
+                            <div class="flex flex-wrap gap-6 mono opacity-40"><span>→ First Call Advantage</span><span>→ Cross-Border Pipeline</span><span>→ Network State Nodes</span></div>
+                        </div>
+                        <div class="grid md:grid-cols-2">
+                            <div class="utility-box group"><h4 class="text-2xl font-black mt-8 mb-4 text-white transition">DISTRIBUTION</h4><p class="text-xs text-zinc-500 uppercase mono tracking-widest">Kickstart your growth with access to thousands of users across our communities.</p></div>
+                            <div class="utility-box group"><h4 class="text-2xl font-black mt-8 mb-4 text-white transition">TRACTION</h4><p class="text-xs text-zinc-500 uppercase mono tracking-widest">Engage with early adopters who provide feedback, advocacy and energy.</p></div>
+                            <div class="utility-box group"><h4 class="text-2xl font-black mt-8 mb-4 text-white transition">AMPLIFICATION</h4><p class="text-xs text-zinc-500 uppercase mono tracking-widest">Build credibility through curated content, podcasts and events.</p></div>
+                            <div class="utility-box group border-b-0 md:border-b lg:border-b-0"><h4 class="text-2xl font-black mt-8 mb-4 text-white transition">NETWORK</h4><p class="text-xs text-zinc-500 uppercase mono tracking-widest">Get connected to follow-on investors and industry partners through our network.</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-16 border-t border-white/10 bg-[#050505] overflow-hidden">
+            <div class="ticker-container"><div class="ticker-content flex gap-16 md:gap-32 items-center"><span class="text-4xl md:text-7xl font-black opacity-10 hover:opacity-100 hover:text-indigo-500 transition-all duration-500 whitespace-nowrap cursor-default">Jungle_Ventures</span><span class="text-4xl md:text-7xl font-black opacity-10 hover:opacity-100 hover:text-indigo-500 transition-all duration-500 whitespace-nowrap cursor-default">Pukecast</span><span class="text-4xl md:text-7xl font-black opacity-10 hover:opacity-100 hover:text-indigo-500 transition-all duration-500 whitespace-nowrap cursor-default">TheArcWeb</span><span class="text-4xl md:text-7xl font-black opacity-10 hover:opacity-100 hover:text-indigo-500 transition-all duration-500 whitespace-nowrap cursor-default">Hadron Founders Club</span><span class="text-4xl md:text-7xl font-black opacity-10 hover:opacity-100 hover:text-indigo-500 transition-all duration-500 whitespace-nowrap cursor-default">Artsdao.io</span><span class="text-4xl md:text-7xl font-black opacity-10 hover:opacity-100 hover:text-indigo-500 transition-all duration-500 whitespace-nowrap cursor-default">NETWORK SCHOOL</span><span class="text-4xl md:text-7xl font-black opacity-10 hover:opacity-100 hover:text-indigo-500 transition-all duration-500 whitespace-nowrap cursor-default">FOUNDERSHIP_HQ</span><span class="text-4xl md:text-7xl font-black opacity-10 hover:opacity-100 hover:text-indigo-500 transition-all duration-500 whitespace-nowrap cursor-default">Jungle_Ventures</span><span class="text-4xl md:text-7xl font-black opacity-10 hover:opacity-100 hover:text-indigo-500 transition-all duration-500 whitespace-nowrap cursor-default">Pukecast</span></div></div>
+        </section>
+
+        <footer id="signals" class="py-40 px-6 border-t border-white/10 bg-[#080808]">
+            <div class="max-w-[1440px] mx-auto"><div class="grid lg:grid-cols-2 gap-24"><div class="reveal"><h2 class="text-huge text-white mb-10">PITCH.</h2><p class="text-xl text-zinc-500 mb-12 max-w-sm">Ashish Sood - General Partner<br>Curious Ventures.</p><button onclick="showView('archipelago')" class="inline-block px-14 py-6 bg-white text-black font-black text-xl rounded-full hover:bg-indigo-600 hover:text-white transition-all transform hover:scale-105">Join the Archipelago</button></div><div class="flex flex-col justify-between"><div class="grid md:grid-cols-2 gap-16 reveal"><div><div class="mono text-zinc-600 mb-8">External Signals</div><div class="space-y-6"><a href="#" class="block text-2xl font-black hover:text-indigo-500 transition">Archipelago Pod<span class="mono text-[10px] ml-4 opacity-30">YT ↗</span></a><a href="https://soodgen.substack.com/" target="_blank" class="block text-2xl font-black hover:text-indigo-500 transition">Curious Journal<span class="mono text-[10px] ml-4 opacity-30">SUB ↗</span></a></div></div><div><div class="mono text-zinc-600 mb-8">Connect</div><div class="space-y-4 font-bold text-sm uppercase tracking-widest"><a href="https://x.com/SoodGen" target="_blank" class="block hover:text-indigo-500 transition">Twitter / X</a><a href="https://www.linkedin.com/in/ashish-sood-65051911b/" target="_blank" class="block hover:text-indigo-500 transition">LinkedIn</a></div></div></div><div class="mt-32 pt-10 border-t border-white/5 flex justify-between items-center mono text-[9px] opacity-30"><div>© 2026 CURIOUS VENTURES LP</div><div>ALL SIGNAL. NO NOISE.</div></div></div></div></div>
+        </footer>
+    </div>
+
+    <!-- INVESTMENT MEMO / THESIS VIEW -->
+    <div id="thesis-view" style="display: none;">
+        <nav class="fixed top-0 w-full z-[1001] hype-border-b bg-[#050505]/90 backdrop-blur-md">
+            <div class="max-w-[1440px] mx-auto flex justify-between items-center px-6 py-4">
+                <a href="javascript:void(0)" onclick="showView('landing')" class="group flex items-center gap-2"><span class="mono font-bold group-hover:text-indigo-500 transition">← Back</span></a>
+                <div class="font-white uppercase tracking-widest mono text-[10px] opacity-40">Thesis / Memo v1.0</div>
+                <button onclick="toggleModal(true)" class="bg-white text-black px-6 py-2 rounded-full hover:bg-indigo-600 hover:text-white transition mono font-bold text-[10px]">Pitch Us</button>
+            </div>
+        </nav>
+
+        <section class="py-32 px-6">
+            <div class="max-w-4xl mx-auto">
+                <header class="mb-24 reveal">
+                    <div class="mono text-indigo-500 mb-4 tracking-widest">Internal Memo / Curious Ventures</div>
+                    <h1 class="text-4xl md:text-7xl font-black mb-12 tracking-tighter leading-[0.9]">OWNING THE <br>DISTRIBUTION MOAT.</h1>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mono text-[11px] opacity-40 border-t border-white/10 pt-10">
+                        <div>From: Ashish Sood - General Partners, Curious Ventures</div>
+                        <div class="text-right">Subject: Owning the Distribution Moat</div>
+                    </div>
+                </header>
+
+                <div class="space-y-32 reveal">
+                    <div class="memo-content">
+                        <h3 class="mono text-xs mb-8 opacity-40">[ Executive Summary ]</h3>
+                        <p class="text-2xl md:text-3xl font-light leading-relaxed text-zinc-200 mb-10 italic">
+                            "In an era where AI has commoditized code and Web3 has commoditized capital, <span class="text-white font-black underline decoration-indigo-500">Distribution is the only moat.</span>"
+                        </p>
+                        <p class="text-xl text-zinc-400 leading-relaxed mb-8">
+                            Curious Ventures is launching a $10 Million Pre-Seed Hybrid Fund built by leveraging an Archipelago of high-trust distribution nodes. We believe the internet is undergoing a massive Behavioral Fork where AI is transforming how users command software, and Web3 is revolutionizing asset ownership and retention.
+                        </p>
+                        <p class="text-xl text-zinc-400 leading-relaxed">
+                            Unlike traditional funds, we utilize a Hybrid Structure ($8M Equity / $2M Liquid) to balance long-term venture returns with early liquidity participation. By leveraging an "Archipelago" of distributed communities, we secure a distribution-first advantage for our founders.
+                        </p>
+                    </div>
+
+                    <div class="memo-content">
+                        <h3 class="mono text-xs mb-8 opacity-40">[ 01 / Market Thesis ]</h3>
+                        <h4 class="text-4xl font-black mb-12 uppercase tracking-tight">The Behavioral Fork</h4>
+                        <div class="space-y-16">
+                            <div class="grid md:grid-cols-12 gap-10">
+                                <div class="md:col-span-4 mono text-zinc-500 uppercase">The AI Shift</div>
+                                <div class="md:col-span-8">
+                                    <p class="text-xl text-zinc-300 font-bold mb-4">Search → Commanding</p>
+                                    <p class="text-zinc-400 leading-relaxed">Users no longer want to navigate menus, they expect software to act. We are moving from Chatbots to Large Action Models that execute complex tasks. The Agentic AI market is projected to grow from $5.25B in 2024 to ~$200B in 2034.</p>
+                                </div>
+                            </div>
+                            <div class="grid md:grid-cols-12 gap-10">
+                                <div class="md:col-span-4 mono text-zinc-500 uppercase">Web3 Maturity</div>
+                                <div class="md:col-span-8">
+                                    <p class="text-xl text-zinc-300 font-bold mb-4">Invisible Rails</p>
+                                    <p class="text-zinc-400 leading-relaxed">After a decade of infrastructure building, Web3 is ready for the passenger experience. Winning protocols make the blockchain invisible through chain abstraction and invisible wallets that require no seed phrases, enabling mass consumer adoption.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="memo-content">
+                        <h3 class="mono text-xs mb-8 opacity-40">[ 02 / Strategy ]</h3>
+                        <h4 class="text-4xl font-black mb-12 uppercase tracking-tight">Hybrid & Disciplined</h4>
+                        <p class="text-xl text-zinc-400 mb-12">We deploy capital over a 3-year period to mitigate vintage risk, targeting ~15 core startup deals.</p>
+                        
+                        <div class="hype-border p-8 mb-12">
+                            <h5 class="mono text-[10px] opacity-40 mb-6 tracking-widest">Portfolio Construction ($10M Total)</h5>
+                            <table class="memo-table">
+                                <thead><tr><th>Allocation Segment</th><th>Value ($USD)</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Venture Arm (80%)</td><td class="font-bold">$8,000,000</td></tr>
+                                    <tr><td class="opacity-50 pl-6">Investable Capital (8 Years)</td><td class="opacity-50">$6,800,000</td></tr>
+                                    <tr><td class="opacity-50 pl-6">Access Capital (60%)</td><td class="opacity-50">$4,080,000</td></tr>
+                                    <tr><td class="opacity-50 pl-6">Conviction Capital (40%)</td><td class="opacity-50">$2,720,000</td></tr>
+                                    <tr><td>Liquid Arm (Proprietary Engine)</td><td class="font-bold">$2,000,000</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-10">
+                            <div>
+                                <h5 class="mono text-xs mb-4 text-indigo-500">The Rule of 3</h5>
+                                <p class="text-sm text-zinc-500 leading-relaxed">To force selectivity and hedge risk, we cap investments at max 3 bets per micro-sector.</p>
+                            </div>
+                            <div>
+                                <h5 class="mono text-xs mb-4 text-indigo-500">The Liquid Arm</h5>
+                                <p class="text-sm text-zinc-500 leading-relaxed">Strategy: Investing in liquid tokens and yield-generating assets. Goal: Target ~20% APY to generate early Distributions to Paid-In Capital and recycle profits.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="memo-content">
+                        <h3 class="mono text-xs mb-8 opacity-40">[ 03 / Our Edge ]</h3>
+                        <h4 class="text-4xl font-black mb-12 uppercase tracking-tight">Distribution via Trust Node Networks</h4>
+                        <div class="grid lg:grid-cols-2 gap-16 items-start">
+                            <div class="space-y-8">
+                                <p class="text-xl text-zinc-300">We are moving towards an era where recommendations and reviews are the primary drivers for adoption. Referral marketing drives 3x to 5x higher conversion rates.</p>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-baseline border-b border-white/10 pb-2">
+                                        <span class="mono text-[10px] opacity-40 uppercase">Referral Importance</span>
+                                        <span class="font-black text-2xl">86%</span>
+                                    </div>
+                                    <div class="flex justify-between items-baseline border-b border-white/10 pb-2">
+                                        <span class="mono text-[10px] opacity-40 uppercase">Traditional Ad Weight</span>
+                                        <span class="font-black text-2xl">2%</span>
+                                    </div>
+                                    <div class="flex justify-between items-baseline border-b border-white/10 pb-2">
+                                        <span class="mono text-[10px] opacity-40 uppercase">Retention Increase</span>
+                                        <span class="font-black text-2xl">37%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-10 bg-white/[0.03] hype-border">
+                                <h5 class="mono text-indigo-500 mb-4 tracking-tighter">Case Study: Yaps Protocol</h5>
+                                <p class="text-sm text-zinc-400 leading-relaxed mb-6">Yaps (Kaito AI) demonstrates how Info-Fi can replace traditional ad-spend with community growth.</p>
+                                <ul class="mono text-[10px] space-y-2 opacity-60">
+                                    <li>→ 110X Growth in 12 months</li>
+                                    <li>→ 250,000+ Active Users</li>
+                                    <li>→ 144,000+ Verified X Linkages</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="memo-content">
+                        <h3 class="mono text-xs mb-8 opacity-40">[ 04 / Selection ]</h3>
+                        <h4 class="text-4xl font-black mb-12 uppercase tracking-tight italic">Law of Community: De-Risking via a MVO.</h4>
+                        <div class="grid md:grid-cols-2 gap-px bg-white/10 hype-border">
+                            <div class="p-10 bg-[#050505]">
+                                <h5 class="mono text-xs mb-4 text-indigo-500">The MVO Test</h5>
+                                <p class="text-zinc-400 text-sm leading-relaxed">Unlike a full MVP, the Minimum Viable Offering tests the smallest unit of value directly into our Archipelago nodes. Users are the real truth.</p>
+                            </div>
+                            <div class="p-10 bg-[#050505]">
+                                <h5 class="mono text-xs mb-4 text-indigo-500">Iteration Velocity</h5>
+                                <p class="text-zinc-400 text-sm leading-relaxed">The data tells us if the product works, but the reaction tells us that “do we have a founder fit here”. We leverage unfiltered community data.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Track Record -->
+                    <div class="memo-content">
+                        <h3 class="mono text-xs mb-8 opacity-40">[ 05 / History ]</h3>
+                        <h4 class="text-4xl font-black mb-12 uppercase tracking-tight">Venture Wins</h4>
+                        <div class="grid md:grid-cols-3 gap-8 mb-16">
+                            <div class="p-8 hype-border">
+                                <div class="mono text-[9px] opacity-40 mb-2">CapX</div>
+                                <div class="text-4xl font-black">$250M</div>
+                                <div class="mono text-[8px] opacity-20 mt-4">Current Value</div>
+                            </div>
+                            <div class="p-8 hype-border">
+                                <div class="mono text-[9px] opacity-40 mb-2">Memeland</div>
+                                <div class="text-4xl font-black">$3B</div>
+                                <div class="mono text-[8px] opacity-20 mt-4">Market Peak</div>
+                            </div>
+                            <div class="p-8 hype-border">
+                                <div class="mono text-[9px] opacity-40 mb-2">Pyse</div>
+                                <div class="text-4xl font-black">$28M</div>
+                                <div class="mono text-[8px] opacity-20 mt-4">Current Value</div>
+                            </div>
+                        </div>
+                        <p class="mono text-[11px] text-indigo-500 text-center tracking-widest italic uppercase">Liquid returns: Turning <$75K into >$500K realized returns via field strategies.</p>
+                    </div>
+
+                    <!-- Fund at a Glance -->
+                    <div class="memo-content">
+                        <h3 class="mono text-xs mb-8 opacity-40">[ 06 / Fund Terminal ]</h3>
+                        <div class="space-y-20">
+                            <div>
+                                <h5 class="text-2xl font-black mb-6">The Venture Fund</h5>
+                                <table class="memo-table">
+                                    <thead><tr><th>Parameter</th><th>Strategy</th></tr></thead>
+                                    <tbody>
+                                        <tr><td>Fund Size Model</td><td>$8M</td></tr>
+                                        <tr><td>Initial Check</td><td>$250k – $500k</td></tr>
+                                        <tr><td>Pace</td><td>3 Years (35% / 35% / 25%)</td></tr>
+                                        <tr><td>Ownership Target</td><td>2.5% - 10%</td></tr>
+                                        <tr><td>Target MOIC</td><td>6-8x</td></tr>
+                                        <tr><td>GP Commitment</td><td>$500K (5%)</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div>
+                                <h5 class="text-2xl font-black mb-6">The Liquid Fund</h5>
+                                <table class="memo-table">
+                                    <thead><tr><th>Asset Class</th><th>Allocation</th></tr></thead>
+                                    <tbody>
+                                        <tr><td>OTC / Pre-Listing Deals</td><td>~$0.5M</td></tr>
+                                        <tr><td>Delta Neutral Yield Farming</td><td>~$1.0M</td></tr>
+                                        <tr><td>High Conviction Alpha Bets</td><td>~$0.5M</td></tr>
+                                        <tr><td>Target Net IRR</td><td>~20%</td></tr>
+                                        <tr><td>Capital Turnover</td><td>Yearly</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Closing -->
+                    <div class="memo-content text-center py-20 border-t border-white/10">
+                        <h2 class="text-5xl md:text-7xl font-black mb-12 tracking-tighter italic uppercase">Build the <br>Future internet.</h2>
+                        <p class="text-xl text-zinc-500 max-w-2xl mx-auto mb-16">Legal structuring is finalizing. Capital deployment begins Q1 2026. Join us in building the next generation of the internet.</p>
+                        <button onclick="toggleModal(true)" class="bg-white text-black px-12 py-6 rounded-full font-black text-xl hover:bg-indigo-600 hover:text-white transition-all transform hover:scale-105">Submit Transmission</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <footer class="py-24 px-6 border-t border-white/10">
+            <div class="max-w-4xl mx-auto flex justify-between items-center opacity-20 mono text-[9px]">
+                <div>© 2026 CURIOUS VENTURES LP</div>
+                <div class="flex gap-6">
+                    <a href="https://x.com/SoodGen" target="_blank" class="hover:text-white transition">X / Twitter</a>
+                    <a href="https://www.linkedin.com/in/ashish-sood-65051911b/" target="_blank" class="hover:text-white transition">LinkedIn</a>
+                </div>
+                <div>END OF DOCUMENT</div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- THE ARCHIPELAGO VIEW -->
+    <div id="archipelago-view" style="display: none;">
+        <nav class="fixed top-0 w-full z-[1001] hype-border-b bg-[#050505]/90 backdrop-blur-md">
+            <div class="max-w-[1440px] mx-auto flex justify-between items-center px-6 py-4">
+                <a href="javascript:void(0)" onclick="showView('landing')" class="group flex items-center gap-2"><span class="mono font-bold group-hover:text-indigo-500 transition">← Back</span></a>
+                <div class="font-white text-1xl lg:block uppercase tracking-widest mono text-[10px] opacity-40">The Archipelago</div>
+                <div class="flex items-center gap-6 md:gap-10">
+                    <div class="w-px h-4 bg-white/10 hidden md:block"></div>
+                    <button onclick="toggleModal(true)" class="bg-orange-400 text-black px-6 py-2 rounded-full hover:bg-white hover:text-black transition mono font-bold text-[10px]">Join Us</button>
+                </div>
+            </div>
+        </nav>
+
+        <section class="min-h-[80vh] flex flex-col justify-center px-6 pt-32">
+            <div class="max-w-[1440px] mx-auto w-full">
+                <div class="mono text-indigo-500 mb-8 reveal">01 / What is the Archipelago</div>
+                <h1 class="archipelago-huge mb-16 reveal">
+                    A NETWORK <br>
+                    <span class="text-stroke">OF</span> <br>
+                    NETWORKS
+                </h1>
+                
+                <div class="grid md:grid-cols-12 gap-10 reveal">
+                    <div class="md:col-span-8">
+                        <p class="text-2xl md:text-5xl font-light leading-tight text-zinc-300">
+                            The Archipelago is a decentralized network of <span class="italic text-white">high-trust nodes</span> communities, physical hubs, and digital states, that provide instant distribution for the next generation of founders.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-24 px-6">
+            <div class="max-w-[1440px] mx-auto grid md:grid-cols-3 hype-border bg-white/[0.02]">
+                <div class="p-12 hype-border-r hype-border-b md:border-b-0 reveal">
+                    <div class="mono text-zinc-500 mb-12 flex items-center"><span class="node-circle"></span> Node Theory</div>
+                    <h3 class="text-3xl font-black mb-6 leading-none">Permissionless <br>Access.</h3>
+                    <p class="text-zinc-400 leading-relaxed mb-8">Modern startups fail not because they can't build, but because they can't reach. We leverage sovereign communities across regions to seed products where energy is highest.</p>
+                    <div class="mono text-[10px] opacity-30">Strategic Geography</div>
+                </div>
+                <div class="p-12 hype-border-r hype-border-b md:border-b-0 reveal" style="transition-delay: 0.1s">
+                    <div class="mono text-zinc-500 mb-12 flex items-center"><span class="node-circle"></span> Trust Arbitrage</div>
+                    <h3 class="text-3xl font-black mb-6 leading-none">The Social <br>Moat.</h3>
+                    <p class="text-zinc-400 leading-relaxed mb-8">In an AI-saturated world, human curation is the ultimate premium. Our Archipelago is a filter, connecting high-integrity founders with high-conviction early adopters.</p>
+                    <div class="mono text-[10px] opacity-30">Quality Filter</div>
+                </div>
+                <div class="p-12 reveal" style="transition-delay: 0.2s">
+                    <div class="mono text-zinc-500 mb-12 flex items-center"><span class="node-circle"></span> Day Zero Traction</div>
+                    <h3 class="text-3xl font-black mb-6 leading-none">Distribution <br>Rails.</h3>
+                    <p class="text-zinc-400 leading-relaxed mb-8">By the time Curious Ventures invests, the rails are already laid. We plug your product directly into our network of networks for immediate feedback and compounding growth.</p>
+                    <div class="mono text-[10px] opacity-30">Growth Engine</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-40 px-6 border-t border-white/10">
+            <div class="max-w-[1440px] mx-auto">
+                <div class="grid lg:grid-cols-2 gap-20 items-center">
+                    <div class="reveal">
+                        <div class="mono text-indigo-500 mb-6">02 / Why It Works</div>
+                        <h2 class="text-5xl md:text-7xl font-black mb-10 leading-none">THE SOVEREIGN <br>ADVANTAGE.</h2>
+                        <div class="space-y-8 text-xl text-zinc-400 leading-relaxed">
+                            <p>Legacy institutions and centralized platforms have become "high-noise, low-trust." As Balaji Srinivasan notes in <span class="italic text-white">The Network State</span>, the future belongs to communities that can organize digitally and act physically.</p>
+                            <p>The Archipelago works because it prioritizes Social Proximity over Physical Proximity. We bypass the gatekeepers by building a <span class="text-white">Sovereign Distribution Network.</span></p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-px bg-white/10 hype-border reveal">
+                        <div class="p-10 bg-[#080808]">
+                            <h4 class="mono text-indigo-500 mb-4">The Logic</h4>
+                            <p class="text-2xl font-bold mb-4">Decoupling from the Ad-Stack</p>
+                            <p class="text-sm text-zinc-500">Search and Social ads are a tax on innovation. High-trust nodes reduce Customer Acquisition Cost (CAC) to near zero through peer-to-peer advocacy within the network.</p>
+                        </div>
+                        <div class="p-10 bg-[#080808]">
+                            <h4 class="mono text-indigo-500 mb-4">The Importance</h4>
+                            <p class="text-2xl font-bold mb-4">Sovereign Distribution</p>
+                            <p class="text-sm text-zinc-500">In a world of increasing censorship and platform risk, owning your distribution rails isn't just an advantage, it's survival. The Archipelago is your sovereign entry into the global market.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-40 px-6 bg-zinc-900/20 border-t border-white/10">
+            <div class="max-w-[1440px] mx-auto">
+                <div class="mb-24 reveal">
+                    <h2 class="text-huge text-center">JOIN US.</h2>
+                    <p class="mono text-center text-indigo-500 mt-6">Select your entry point into the Archipelago</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-px bg-white/10 hype-border">
+                    <div onclick="toggleModal(true)" class="bg-[#050505] p-12 md:p-20 cta-card group reveal cursor-pointer">
+                        <div class="flex justify-between items-start mb-24"><div class="mono font-bold mono-tag">03 / Founders</div><div class="text-4xl transition-transform arrow-icon">↗</div></div>
+                        <h3 class="text-5xl font-black mb-8 leading-none">PITCH YOUR <br>STARTUP.</h3>
+                        <p class="text-xl text-zinc-400 mb-12 max-w-md">Building in AI or Web3? We provide the capital and the distribution rails to scale.</p>
+                        <span class="inline-block mono text-xs font-black border-b border-current pb-2 tracking-tighter">SUBMIT DECK</span>
+                    </div>
+                    <div onclick="toggleModal(true)" class="bg-[#050505] p-12 md:p-20 cta-card group reveal cursor-pointer" style="transition-delay: 0.1s">
+                        <div class="flex justify-between items-start mb-24"><div class="mono font-bold mono-tag">04 / Communities</div><div class="text-4xl transition-transform arrow-icon">↗</div></div>
+                        <h3 class="text-5xl font-black mb-8 leading-none">BECOME A <br>NODE.</h3>
+                        <p class="text-xl text-zinc-400 mb-12 max-w-md">Run a community, hub, or DAO? Partner with us to bring exclusive deal-flow to your members.</p>
+                        <span class="inline-block mono text-xs font-black border-b border-current pb-2 tracking-tighter">REGISTER INTEREST</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="py-24 px-6 border-t border-white/10">
+            <div class="max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
+                <div class="font-black text-2xl tracking-tighter leading-none">STAY CURIOUS.</div>
+                <div class="flex gap-10 mono text-[10px] opacity-40">
+                    <a href="https://x.com/SoodGen" target="_blank" class="hover:text-white transition">Twitter / X</a>
+                    <a href="https://www.linkedin.com/in/ashish-sood-65051911b/" target="_blank" class="hover:text-white transition">LinkedIn</a>
+                </div>
+                <div class="mono text-[10px] opacity-20">© 2026 ARCHIPELAGO FOUNDATION</div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- THESIS GATE MODAL -->
+    <div id="thesisGateModal">
+        <div class="modal-content">
+            <button onclick="toggleThesisGate(false)" class="absolute top-6 right-6 mono opacity-40 hover:opacity-100 transition">[ESC]</button>
+            <p class="mono text-indigo-500 mb-2">ACCESS RESTRICTED</p>
+            <h3 class="text-2xl font-black mb-6 uppercase tracking-tighter">Unlock Internal Memo</h3>
+            <p class="text-zinc-500 text-xs mono mb-8 leading-relaxed">PLEASE IDENTIFY YOURSELF AND ENTER ACCESS KEY TO UNLOCK TRANSMISSION.</p>
+            <div class="space-y-6">
+                <div>
+                    <label class="mono text-[10px] opacity-40">CONTACT EMAIL</label>
+                    <input type="email" id="gateEmail" class="modal-input" placeholder="name@domain.com">
+                </div>
+                <div>
+                    <label class="mono text-[10px] opacity-40">ACCESS KEY</label>
+                    <input type="password" id="gatePass" class="modal-input" placeholder="••••••••">
+                </div>
+                <button onclick="unlockThesis()" class="w-full p-5 bg-white text-black font-black uppercase mt-4 hover:bg-indigo-600 hover:text-white transition tracking-widest text-sm">Verify & Unlock</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GLOBAL PITCH MODAL -->
+    <div id="pitchModal"><div class="modal-content"><button onclick="toggleModal(false)" class="absolute top-6 right-6 mono opacity-40 hover:opacity-100 transition">[CLOSE]</button><div id="step1" class="form-step active"><p class="mono text-indigo-500 mb-2">IDENTIFY USER TYPE</p><h3 class="text-2xl font-black mb-8 uppercase">Who are you?</h3><div class="space-y-4"><button onclick="nextStep('founder')" class="w-full p-6 hype-border hover:bg-white hover:text-black transition text-left flex justify-between items-center group"><span class="font-bold">I'M A FOUNDER</span><span class="mono text-[10px] opacity-0 group-hover:opacity-100 transition">SELECT</span></button><button onclick="nextStep('owner')" class="w-full p-6 hype-border hover:bg-white hover:text-black transition text-left flex justify-between items-center group"><span class="font-bold">I'M A COMMUNITY OWNER</span><span class="mono text-[10px] opacity-0 group-hover:opacity-100 transition">SELECT</span></button></div></div><div id="stepFounder" class="form-step"><p class="mono text-indigo-500 mb-2">FOUNDER FUNNEL</p><h3 class="text-2xl font-black mb-8 uppercase tracking-tighter">Project Submission</h3><div class="space-y-6"><div><label class="mono text-[10px] opacity-40">PROJECT NAME / URL</label><input type="text" class="modal-input" placeholder="archipelago.ai"></div><div><label class="mono text-[10px] opacity-40">DECK URL / DOCUMENT</label><input type="text" class="modal-input" placeholder="docsend.com/view/..."></div><div><label class="mono text-[10px] opacity-40">CONTACT EMAIL</label><input type="email" class="modal-input" placeholder="name@domain.com"></div><button onclick="submitForm()" class="w-full p-5 bg-white text-black font-black uppercase mt-4 hover:bg-indigo-600 hover:text-white transition tracking-widest text-sm">Transmit Pitch</button></div></div><div id="stepOwner" class="form-step"><p class="mono text-indigo-500 mb-2">COMMUNITY FUNNEL</p><h3 class="text-2xl font-black mb-8 uppercase tracking-tighter">Network Access</h3><div class="space-y-6"><div><label class="mono text-[10px] opacity-40">COMMUNITY NAME</label><input type="text" class="modal-input" placeholder="Network State Hub"></div><div><label class="mono text-[10px] opacity-40">COMMUNITY LINK / URL</label><input type="text" class="modal-input" placeholder="t.me/community_group"></div><div><label class="mono text-[10px] opacity-40">CONTACT EMAIL</label><input type="email" class="modal-input" placeholder="name@domain.com"></div><button onclick="submitForm()" class="w-full p-5 bg-white text-black font-black uppercase mt-4 hover:bg-indigo-600 hover:text-white transition tracking-widest text-sm">Sync Network</button></div></div><div id="stepSuccess" class="form-step text-center"><div class="text-6xl mb-6 text-indigo-500">✓</div><h3 class="text-2xl font-black mb-4 uppercase">TRANSMISSION RECEIVED</h3><p class="text-zinc-500 mono text-xs mb-8 leading-relaxed">YOUR DATA HAS BEEN SYNCED WITH THE ARCHIPELAGO.<br>A PARTNER WILL INITIATE CONTACT SOON.</p><button onclick="toggleModal(false)" class="mono text-[10px] border-b border-white pb-1 hover:text-indigo-500 transition">CLOSE TERMINAL</button></div></div></div>
+
+    <script>
+        function showView(viewName) {
+            const views = ['landing-view', 'archipelago-view', 'thesis-view'];
+            views.forEach(v => {
+                const el = document.getElementById(v);
+                if(el) el.style.display = 'none';
+            });
+            const target = document.getElementById(viewName + '-view');
+            if(target) target.style.display = 'block';
+            window.scrollTo(0, 0);
+            runRevealObserver();
+        }
+
+        function gateThesis() {
+            toggleThesisGate(true);
+        }
+
+        function toggleThesisGate(show) {
+            const modal = document.getElementById('thesisGateModal');
+            if (show) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            } else {
+                modal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function unlockThesis() {
+            const email = document.getElementById('gateEmail').value;
+            const pass = document.getElementById('gatePass').value;
+            
+            if (email && email.includes('@') && pass === 'Staycurious2026') {
+                toggleThesisGate(false);
+                showView('thesis');
+            } else {
+                if (!email.includes('@')) document.getElementById('gateEmail').style.borderColor = 'red';
+                if (pass !== 'Staycurious2026') document.getElementById('gatePass').style.borderColor = 'red';
+                
+                setTimeout(() => {
+                    document.getElementById('gateEmail').style.borderColor = '';
+                    document.getElementById('gatePass').style.borderColor = '';
+                }, 2000);
+            }
+        }
+
+        function runRevealObserver() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) entry.target.classList.add('active');
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        }
+        runRevealObserver();
+
+        function toggleModal(show) {
+            const modal = document.getElementById('pitchModal');
+            if (show) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                resetForm();
+            } else {
+                modal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function nextStep(role) {
+            document.getElementById('step1').classList.remove('active');
+            if (role === 'founder') document.getElementById('stepFounder').classList.add('active');
+            else document.getElementById('stepOwner').classList.add('active');
+        }
+
+        function submitForm() {
+            document.querySelectorAll('.form-step').forEach(s => s.classList.remove('active'));
+            document.getElementById('stepSuccess').classList.add('active');
+        }
+
+        function resetForm() {
+            document.querySelectorAll('.form-step').forEach(s => s.classList.remove('active'));
+            document.getElementById('step1').classList.add('active');
+            document.querySelectorAll('.modal-input').forEach(i => i.value = '');
+        }
+
+        window.onclick = function(event) {
+            const pModal = document.getElementById('pitchModal');
+            const tModal = document.getElementById('thesisGateModal');
+            if (event.target == pModal) toggleModal(false);
+            if (event.target == tModal) toggleThesisGate(false);
+        }
+    </script>
+</body>
+</html>
